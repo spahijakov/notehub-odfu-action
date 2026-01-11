@@ -31,6 +31,8 @@ func main() {
 	clientID := action.GetInput("client_id")
 	clientSecret := action.GetInput("client_secret")
 
+	issueDFU := action.GetInput("issue_dfu");
+
 	// Validate required inputs
 	if projectUID == "" {
 		action.Fatalf("project_uid is required")
@@ -44,6 +46,9 @@ func main() {
 	if clientSecret == "" {
 		action.Fatalf("client_secret is required")
 	}
+	if issueDFU == "" {
+		action.Fatalf("issue_dfu is required")
+	}
 
 	// Get optional inputs
 	deviceUID := action.GetInput("device_uid")
@@ -54,6 +59,8 @@ func main() {
 	notecardFirmware := action.GetInput("notecard_firmware")
 	location := action.GetInput("location")
 	sku := action.GetInput("sku")
+
+	onlyUpload := strings.EqualFold(issueDFU, "false")
 
 	log.Printf("Starting firmware deployment to Notehub...")
 	log.Printf("Project UID: %s", projectUID)
@@ -73,11 +80,12 @@ func main() {
 		NotecardFirmware: notecardFirmware,
 		Location:         location,
 		SKU:              sku,
-	}); err != nil {
+	}, onlyUpload); err != nil {
 		action.Fatalf("Deployment failed: %v", err)
 	}
 
 	log.Printf("✅ Firmware deployment completed successfully")
+
 }
 
 // DeploymentConfig contains all the configuration for firmware deployment
@@ -338,7 +346,7 @@ func (c *NotehubClient) TriggerDFU(ctx context.Context, config *DeploymentConfig
 }
 
 // deployFirmware orchestrates the entire firmware deployment process
-func deployFirmware(ctx context.Context, config *DeploymentConfig) error {
+func deployFirmware(ctx context.Context, config *DeploymentConfig, onlyUpload bool) error {
 	// Initialize Notehub client
 	client := NewNotehubClient()
 
@@ -363,15 +371,17 @@ func deployFirmware(ctx context.Context, config *DeploymentConfig) error {
 
 	log.Printf("✅ Firmware uploaded to Notehub")
 
-	// Step 4: Trigger Device Firmware Update
-	if err := client.TriggerDFU(ctx, config, uploadResp.Filename); err != nil {
-		return fmt.Errorf("DFU trigger failed: %w", err)
+	if (!onlyUpload){
+		// Step 4: Trigger Device Firmware Update
+		if err := client.TriggerDFU(ctx, config, uploadResp.Filename); err != nil {
+			return fmt.Errorf("DFU trigger failed: %w", err)
+		}
+
+		log.Printf("✅ Device firmware update triggered")
+
+		// Step 5: Deployment Summary
+		logDeploymentSummary(config, uploadResp.Filename)
 	}
-
-	log.Printf("✅ Device firmware update triggered")
-
-	// Step 5: Deployment Summary
-	logDeploymentSummary(config, uploadResp.Filename)
 
 	return nil
 }

@@ -77,6 +77,7 @@ jobs:
       - name: Deploy to Notehub
         uses: docker://Bucknalla/notehub-dfu-github:latest
         with:
+          issue_dfu: 'true'
           project_uid: 'app:12345678-1234-1234-1234-123456789abc'
           firmware_file: 'build/firmware.bin'
           device_uid: ${{ inputs.device_uid }}
@@ -132,6 +133,7 @@ jobs:
       - name: Deploy to specific devices
         uses: docker://Bucknalla/notehub-dfu-github:latest
         with:
+          issue_dfu: 'true'
           project_uid: ${{ vars.NOTEHUB_PROJECT_UID }}
           firmware_file: 'build/firmware.bin'
           client_id: ${{ secrets.NOTEHUB_CLIENT_ID }}

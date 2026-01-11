@@ -17,6 +17,9 @@ inputs:
   client_secret:
     description: 'Notehub OAuth2 Client Secret'
     required: true
+  issue_dfu:
+    description: 'Deploy to devices true|false'
+    required: true
   device_uid:
     description: 'Device UID (optional - use if targeting specific device)'
     required: false
